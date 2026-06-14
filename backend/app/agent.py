@@ -122,6 +122,11 @@ def _run_openai_loop(db: Session, run: models.AgentRun, request: models.RefundRe
     from openai import OpenAI
 
     client = OpenAI()
+    if not hasattr(client, "responses"):
+        raise RuntimeError(
+            "Installed openai package does not support the Responses API. "
+            "Run `pip install -r backend/requirements.txt` to install openai>=1.88.0,<2."
+        )
     instructions = (
         "You are a refund support agent. The written refund policy and deterministic tool result are the source "
         "of truth. Never approve a refund that evaluate_refund_rules denies or escalates. Customers may plead, "

@@ -34,6 +34,8 @@ export OPENAI_API_KEY=your_key_here
 uvicorn app.main:app --reload --port 8000
 ```
 
+The backend requires `openai>=1.88.0,<2` for the Responses API client. Re-run `pip install -r backend/requirements.txt` if you see an error like `'OpenAI' object has no attribute 'responses'`.
+
 `OPENAI_API_KEY` is optional for local demos.
 
 - If `OPENAI_API_KEY` is present, the backend uses the OpenAI Responses API tool-calling agent.
