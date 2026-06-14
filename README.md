@@ -75,18 +75,6 @@ Use the preset buttons in the chat:
 - `Late`: order outside the refund window
 - `Retry trace`: missing order number causes a failed lookup, then retry via email/order history
 
-## Loom Walkthrough Script
-
-Keep it under 5 minutes:
-
-1. Show the React UI and explain the chat/admin split.
-2. Run `Approve` and point out the agent response.
-3. Select the trace and show tool I/O: policy lookup, order lookup, rule evaluation, decision persistence.
-4. Run `Retry trace`; expand the failed `lookup_order` step and the retry.
-5. Run `Final sale`; call out that prompt injection cannot override deterministic policy.
-6. Show token usage, latency, retries, and cost fields.
-7. Mention production additions: authentication, payment-provider integration, PII redaction, durable observability, rate limits, eval suite, human review queue, and model-cost monitoring.
-
 ## API
 
 - `GET /health`
