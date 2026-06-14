@@ -41,7 +41,7 @@ def health(db: Session = Depends(get_db)):
 @app.post("/api/chat", response_model=ChatResponse)
 def chat(payload: ChatRequest, db: Session = Depends(get_db)):
     ensure_seeded(db)
-    run = run_agent(db, payload.session_id, payload.customer_message)
+    run = run_agent(db, payload.session_id, payload.customer_message, payload.customer_email)
     return ChatResponse(
         run_id=run.id,
         assistant_message=run.assistant_message,

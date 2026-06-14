@@ -77,6 +77,8 @@ Use the preset buttons in the chat:
 - `Late`: order outside the refund window
 - `Retry trace`: missing order number causes a failed lookup, then retry via email/order history
 
+Preset scenarios send an explicit customer identity with each `/api/chat` request. Free-form chat uses the currently selected customer identity and goes through the same API path.
+
 ## API
 
 - `GET /health`
@@ -86,6 +88,20 @@ Use the preset buttons in the chat:
 - `GET /api/customers/{customer_id}`
 - `GET /api/orders/{order_id}`
 - `POST /api/seed/reset`
+
+Example chat request:
+
+```bash
+curl -X POST http://127.0.0.1:8000/api/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "session_id": "demo-session-1",
+    "customer_email": "mia.chen@example.com",
+    "customer_message": "I want a refund for order ORD-1001"
+  }'
+```
+
+`customer_email` is preferred when present. If it is omitted, the backend preserves the existing demo fallback behavior, such as resolving identity from the customer message.
 
 ## Notes
 

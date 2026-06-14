@@ -60,6 +60,7 @@ def ensure_seeded(db: Session) -> None:
     ensure_runtime_schema(db)
     if db.query(models.Customer).count() == 0:
         seed_database(db)
+    fix_policy_typos(db)
 
 
 def ensure_runtime_schema(db: Session) -> None:
@@ -69,3 +70,17 @@ def ensure_runtime_schema(db: Session) -> None:
     if columns and "mode_notice" not in columns:
         db.execute(text("ALTER TABLE agent_runs ADD COLUMN mode_notice TEXT DEFAULT ''"))
     db.commit()
+
+
+def fix_policy_typos(db: Session) -> None:
+    policy = db.query(models.PolicyDocument).first()
+    if not policy:
+        return
+    body = (
+        policy.body.replace("Returneditems", "Returned items")
+        .replace("allowedonly", "allowed only")
+        .replace("6.Damaged", "6. Damaged")
+    )
+    if body != policy.body:
+        policy.body = body
+        db.commit()

@@ -16,7 +16,8 @@ body {
 }
 
 button,
-textarea {
+textarea,
+select {
   font: inherit;
 }
 
@@ -144,6 +145,25 @@ h2 {
   padding: 7px 10px;
   background: #f6f8f9;
   color: #24313a;
+}
+
+.customer-scope {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px 12px;
+  border-bottom: 1px solid #e6eaed;
+  color: #34424c;
+  font-weight: 700;
+}
+
+.customer-scope select {
+  min-width: min(100%, 260px);
+  border: 1px solid #bfc8cf;
+  border-radius: 8px;
+  padding: 7px 9px;
+  background: #ffffff;
+  color: #1d262d;
 }
 
 .messages {
@@ -506,6 +526,11 @@ pre {
 
   .composer {
     grid-template-columns: 1fr;
+  }
+
+  .customer-scope {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .send-button {

@@ -5,7 +5,6 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from . import models
-from .policy import evaluate_refund_rules
 
 
 def lookup_customer(db: Session, email_or_customer_id: str) -> dict:
@@ -63,7 +62,7 @@ def get_refund_policy(db: Session) -> dict:
     return {"title": policy.title, "version": policy.version, "body": policy.body}
 
 
-def create_refund_decision(
+def record_refund_decision(
     db: Session,
     request_id: int,
     decision: str,
@@ -99,10 +98,6 @@ def call_tool(db: Session, name: str, arguments: dict) -> dict:
         return lookup_order(db, arguments["order_id"], arguments.get("customer_id"))
     if name == "get_refund_policy":
         return get_refund_policy(db)
-    if name == "evaluate_refund_rules":
-        return evaluate_refund_rules(db, arguments["order_id"], arguments.get("item_ids"), arguments.get("reason", ""))
-    if name == "create_refund_decision":
-        return create_refund_decision(db, **arguments)
     raise ValueError(f"Unknown tool: {name}")
 
 
