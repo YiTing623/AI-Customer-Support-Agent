@@ -1,0 +1,289 @@
+{
+  "customers": [
+    {
+      "id": "CUS-1001",
+      "name": "Mia Chen",
+      "email": "mia.chen@example.com",
+      "loyalty_tier": "gold",
+      "notes": "Prefers email updates.",
+      "orders": [
+        {
+          "id": "ORD-1001",
+          "order_date": "2026-05-30",
+          "status": "delivered",
+          "total": 148.0,
+          "items": [
+            {"sku": "JKT-RUN-01", "name": "AeroLite Running Jacket", "category": "outerwear", "quantity": 1, "unit_price": 118.0, "final_sale": false},
+            {"sku": "SOC-MER-02", "name": "Merino Trail Socks", "category": "accessories", "quantity": 2, "unit_price": 15.0, "final_sale": false}
+          ]
+        },
+        {
+          "id": "ORD-1016",
+          "order_date": "2026-04-18",
+          "status": "delivered",
+          "total": 64.0,
+          "items": [
+            {"sku": "TEE-CORE-08", "name": "Core Training Tee", "category": "tops", "quantity": 2, "unit_price": 32.0, "final_sale": false}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CUS-1002",
+      "name": "Noah Patel",
+      "email": "noah.patel@example.com",
+      "loyalty_tier": "standard",
+      "notes": "Asked about clearance exchange rules.",
+      "orders": [
+        {
+          "id": "ORD-1002",
+          "order_date": "2026-06-01",
+          "status": "delivered",
+          "total": 89.0,
+          "items": [
+            {"sku": "CLR-HDY-77", "name": "Clearance Cloud Hoodie", "category": "clearance", "quantity": 1, "unit_price": 89.0, "final_sale": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CUS-1003",
+      "name": "Ava Thompson",
+      "email": "ava.thompson@example.com",
+      "loyalty_tier": "platinum",
+      "notes": "High lifetime value.",
+      "orders": [
+        {
+          "id": "ORD-1003",
+          "order_date": "2026-05-28",
+          "status": "delivered",
+          "total": 742.0,
+          "items": [
+            {"sku": "BAG-EXP-40", "name": "Expedition Duffel Set", "category": "bags", "quantity": 1, "unit_price": 425.0, "final_sale": false},
+            {"sku": "SHO-ALP-11", "name": "Alpine Approach Shoes", "category": "footwear", "quantity": 1, "unit_price": 317.0, "final_sale": false}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CUS-1004",
+      "name": "Liam Garcia",
+      "email": "liam.garcia@example.com",
+      "loyalty_tier": "silver",
+      "notes": "No issues.",
+      "orders": [
+        {
+          "id": "ORD-1004",
+          "order_date": "2026-04-20",
+          "status": "delivered",
+          "total": 120.0,
+          "items": [
+            {"sku": "PNT-TRK-21", "name": "Trek Utility Pants", "category": "bottoms", "quantity": 1, "unit_price": 120.0, "final_sale": false}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CUS-1005",
+      "name": "Sophia Williams",
+      "email": "sophia.williams@example.com",
+      "loyalty_tier": "standard",
+      "notes": "Requested damaged item support before.",
+      "orders": [
+        {
+          "id": "ORD-1005",
+          "order_date": "2026-06-03",
+          "status": "delivered",
+          "total": 59.0,
+          "items": [
+            {"sku": "BOT-INS-12", "name": "Insulated Bottle", "category": "gear", "quantity": 1, "unit_price": 59.0, "final_sale": false}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CUS-1006",
+      "name": "Ethan Johnson",
+      "email": "ethan.johnson@example.com",
+      "loyalty_tier": "gold",
+      "fraud_flag": true,
+      "notes": "Fraud review flag from payment risk team.",
+      "orders": [
+        {
+          "id": "ORD-1006",
+          "order_date": "2026-06-02",
+          "status": "delivered",
+          "total": 210.0,
+          "items": [
+            {"sku": "SUN-PRO-31", "name": "Summit Pro Sunglasses", "category": "accessories", "quantity": 1, "unit_price": 210.0, "final_sale": false}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CUS-1007",
+      "name": "Olivia Brown",
+      "email": "olivia.brown@example.com",
+      "loyalty_tier": "standard",
+      "notes": "Gift purchaser.",
+      "orders": [
+        {
+          "id": "ORD-1007",
+          "order_date": "2026-05-25",
+          "status": "delivered",
+          "total": 250.0,
+          "items": [
+            {"sku": "GFT-250", "name": "Digital Gift Card", "category": "gift_card", "quantity": 1, "unit_price": 250.0, "final_sale": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CUS-1008",
+      "name": "Lucas Martinez",
+      "email": "lucas.martinez@example.com",
+      "loyalty_tier": "silver",
+      "notes": "Often buys cycling gear.",
+      "orders": [
+        {
+          "id": "ORD-1008",
+          "order_date": "2026-06-04",
+          "status": "delivered",
+          "total": 180.0,
+          "items": [
+            {"sku": "JER-CYC-44", "name": "Velocity Cycling Jersey", "category": "tops", "quantity": 1, "unit_price": 95.0, "final_sale": false},
+            {"sku": "GLO-CYC-09", "name": "Padded Cycling Gloves", "category": "accessories", "quantity": 1, "unit_price": 85.0, "final_sale": false}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CUS-1009",
+      "name": "Emma Davis",
+      "email": "emma.davis@example.com",
+      "loyalty_tier": "gold",
+      "notes": "Prefers store credit.",
+      "orders": [
+        {
+          "id": "ORD-1009",
+          "order_date": "2026-05-12",
+          "status": "delivered",
+          "total": 135.0,
+          "items": [
+            {"sku": "MAT-YOG-06", "name": "Grip Yoga Mat", "category": "fitness", "quantity": 1, "unit_price": 135.0, "final_sale": false}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CUS-1010",
+      "name": "Mason Lee",
+      "email": "mason.lee@example.com",
+      "loyalty_tier": "standard",
+      "notes": "No issues.",
+      "orders": [
+        {
+          "id": "ORD-1010",
+          "order_date": "2026-05-29",
+          "status": "delivered",
+          "total": 72.0,
+          "items": [
+            {"sku": "CAP-RUN-14", "name": "Feather Run Cap", "category": "accessories", "quantity": 1, "unit_price": 36.0, "final_sale": false},
+            {"sku": "BEL-HYD-02", "name": "Hydration Belt", "category": "gear", "quantity": 1, "unit_price": 36.0, "final_sale": false}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CUS-1011",
+      "name": "Isabella Wilson",
+      "email": "isabella.wilson@example.com",
+      "loyalty_tier": "platinum",
+      "notes": "VIP support eligible, policy still applies.",
+      "orders": [
+        {
+          "id": "ORD-1011",
+          "order_date": "2026-06-05",
+          "status": "delivered",
+          "total": 510.0,
+          "items": [
+            {"sku": "WCH-ADV-51", "name": "Adventure GPS Watch", "category": "electronics", "quantity": 1, "unit_price": 510.0, "final_sale": false}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CUS-1012",
+      "name": "James Anderson",
+      "email": "james.anderson@example.com",
+      "loyalty_tier": "silver",
+      "notes": "Exchange accepted last season.",
+      "orders": [
+        {
+          "id": "ORD-1012",
+          "order_date": "2026-05-31",
+          "status": "delivered",
+          "total": 160.0,
+          "items": [
+            {"sku": "VST-FLC-33", "name": "Trail Fleece Vest", "category": "outerwear", "quantity": 1, "unit_price": 160.0, "final_sale": false}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CUS-1013",
+      "name": "Charlotte Taylor",
+      "email": "charlotte.taylor@example.com",
+      "loyalty_tier": "standard",
+      "notes": "Bought personalized product.",
+      "orders": [
+        {
+          "id": "ORD-1013",
+          "order_date": "2026-06-06",
+          "status": "delivered",
+          "total": 44.0,
+          "items": [
+            {"sku": "HAT-CUS-01", "name": "Personalized Trail Hat", "category": "personalized", "quantity": 1, "unit_price": 44.0, "final_sale": true}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CUS-1014",
+      "name": "Benjamin Thomas",
+      "email": "benjamin.thomas@example.com",
+      "loyalty_tier": "gold",
+      "notes": "No issues.",
+      "orders": [
+        {
+          "id": "ORD-1014",
+          "order_date": "2026-05-26",
+          "status": "delivered",
+          "total": 199.0,
+          "items": [
+            {"sku": "SHO-RUN-23", "name": "Road Tempo Shoes", "category": "footwear", "quantity": 1, "unit_price": 199.0, "final_sale": false}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CUS-1015",
+      "name": "Amelia Moore",
+      "email": "amelia.moore@example.com",
+      "loyalty_tier": "standard",
+      "notes": "No issues.",
+      "orders": [
+        {
+          "id": "ORD-1015",
+          "order_date": "2026-06-07",
+          "status": "delivered",
+          "total": 82.0,
+          "items": [
+            {"sku": "TOP-TNK-19", "name": "Breeze Training Tank", "category": "tops", "quantity": 1, "unit_price": 42.0, "final_sale": false},
+            {"sku": "SOC-RUN-10", "name": "Compression Socks", "category": "accessories", "quantity": 1, "unit_price": 40.0, "final_sale": false}
+          ]
+        }
+      ]
+    }
+  ]
+}
