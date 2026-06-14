@@ -162,6 +162,63 @@ def test_approved_refund_records_decision_successfully(monkeypatch):
         db.close()
 
 
+def test_malformed_order_id_logs_failed_lookup_retry_and_approved_decision(monkeypatch):
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    response = post_chat("Please refund ord 1010", "mason.lee@example.com")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["decision"] == "approved"
+    assert "ORD-1010" in body["assistant_message"]
+    assert "approved" in body["assistant_message"]
+
+    trace = client.get(f"/api/runs/{body['run_id']}").json()
+    identity_steps = [step for step in trace["steps"] if step["step_type"] == "identity"]
+    lookup_steps = [step for step in trace["steps"] if step["title"] == "lookup_order"]
+    retry_steps = [step for step in trace["steps"] if step["title"] == "lookup_order retry"]
+    eval_steps = [step for step in trace["steps"] if step["title"] == "evaluate_refund_rules"]
+    record_steps = [step for step in trace["steps"] if step["title"] == "record_refund_decision"]
+
+    assert identity_steps
+    assert identity_steps[0]["status"] == "ok"
+    assert identity_steps[0]["tool_calls"][0]["tool_name"] == "lookup_customer"
+    assert lookup_steps
+    assert lookup_steps[0]["status"] == "error"
+    assert lookup_steps[0]["retry_count"] == 1
+    assert lookup_steps[0]["tool_calls"][0]["arguments"]["order_id"] == "ord 1010"
+    assert lookup_steps[0]["tool_calls"][0]["error"] == "Order not found"
+    assert retry_steps
+    assert retry_steps[0]["retry_count"] == 1
+    assert "ord 1010 -> ORD-1010" in retry_steps[0]["summary"]
+    assert retry_steps[0]["status"] == "ok"
+    assert retry_steps[0]["tool_calls"][0]["arguments"]["order_id"] == "ORD-1010"
+    assert retry_steps[0]["tool_calls"][0]["output"]["id"] == "ORD-1010"
+    assert eval_steps
+    assert eval_steps[-1]["status"] == "ok"
+    assert record_steps
+    assert record_steps[-1]["status"] == "ok"
+    assert record_steps[-1]["tool_calls"][0]["arguments"]["decision"] == "approved"
+    assert record_steps[-1]["tool_calls"][0]["arguments"]["order_id"] == "ORD-1010"
+
+
+def test_malformed_order_id_retry_demo_does_not_call_openai(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+
+    def fail_openai_loop(*args, **kwargs):
+        raise AssertionError("OpenAI loop should not handle malformed order id retry demo")
+
+    monkeypatch.setattr(agent, "_run_openai_loop", fail_openai_loop)
+    response = post_chat("Please refund ord-1010", "mason.lee@example.com")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["agent_mode"] == "deterministic_demo"
+    assert body["decision"] == "approved"
+
+    trace = client.get(f"/api/runs/{body['run_id']}").json()
+    retry_steps = [step for step in trace["steps"] if step["title"] == "lookup_order retry"]
+    assert retry_steps
+    assert "ord-1010 -> ORD-1010" in retry_steps[0]["summary"]
+
+
 def test_model_cannot_call_record_refund_decision_directly():
     tool_names = [tool["name"] for tool in agent.TOOL_DEFINITIONS]
     assert "evaluate_refund_rules" not in tool_names

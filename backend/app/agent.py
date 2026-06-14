@@ -60,8 +60,14 @@ def run_agent(db: Session, session_id: str, customer_message: str, customer_emai
     db.commit()
     started = time.perf_counter()
     request_customer_email = customer_email.strip().lower() if customer_email else None
+    api_key_configured = bool(os.getenv("OPENAI_API_KEY"))
 
-    if os.getenv("OPENAI_API_KEY"):
+    if api_key_configured and _extract_malformed_order_id(customer_message):
+        run.agent_mode = DETERMINISTIC_MODE
+        run.mode_notice = "Deterministic retry demo path used for malformed order id."
+        _log_step(db, run, "routing", "Deterministic retry demo", "ok", run.mode_notice)
+        _run_deterministic_loop(db, run, request, customer_message, request_customer_email)
+    elif api_key_configured:
         try:
             _run_openai_loop(db, run, request, customer_message, request_customer_email)
         except Exception as exc:
@@ -176,7 +182,9 @@ def _run_deterministic_loop(
 
     customer = None
     order = None
-    order_id = _extract_order_id(message)
+    malformed_order_id = _extract_malformed_order_id(message)
+    normalized_order_id = _normalize_malformed_order_id(malformed_order_id) if malformed_order_id else None
+    order_id = _extract_order_id(message) or normalized_order_id
     email = customer_email or _extract_email(message)
 
     if customer_email:
@@ -185,29 +193,74 @@ def _run_deterministic_loop(
             return
     scoped_customer_id = customer["id"] if customer else None
 
-    lookup_step = _log_step(db, run, "tool", "lookup_order", "ok", "Attempting order lookup from customer message.")
-    try:
-        if not order_id:
-            raise ValueError("No order number found in the customer message")
-        order = log_tool_call(
-            db,
-            lookup_step,
-            "lookup_order",
-            {"order_id": order_id},
-            lambda: _lookup_order_scoped(db, order_id, scoped_customer_id),
-        )
-    except Exception as exc:
-        lookup_step.status = "error"
-        lookup_step.retry_count = 1
-        if scoped_customer_id and _is_scope_error(exc):
-            lookup_step.summary = "Blocked cross-customer lookup outside request identity scope."
-            run.decision = "denied"
-            run.assistant_message = "I cannot process that refund because the order does not belong to the verified customer."
+    if malformed_order_id and normalized_order_id:
+        lookup_step = _log_step(db, run, "tool", "lookup_order", "ok", "Attempting order lookup with raw malformed order id.")
+        try:
+            order = log_tool_call(
+                db,
+                lookup_step,
+                "lookup_order",
+                {"order_id": malformed_order_id},
+                lambda: _lookup_order_raw(db, malformed_order_id, scoped_customer_id),
+            )
+        except Exception as exc:
+            lookup_step.status = "error"
+            lookup_step.retry_count = 1
+            lookup_step.summary = f"Initial lookup failed for raw order id {malformed_order_id!r}: {exc}"
             db.commit()
-            return
-        else:
-            lookup_step.summary = f"Initial order lookup failed: {exc}. Retrying with customer identity and order history."
-        db.commit()
+
+        if not order:
+            retry_step = _log_step(
+                db,
+                run,
+                "tool",
+                "lookup_order retry",
+                "ok",
+                f"Retried with normalized order id: {malformed_order_id} -> {normalized_order_id}.",
+                1,
+            )
+            try:
+                order = log_tool_call(
+                    db,
+                    retry_step,
+                    "lookup_order",
+                    {"order_id": normalized_order_id},
+                    lambda: _lookup_order_scoped(db, normalized_order_id, scoped_customer_id),
+                )
+            except Exception as exc:
+                if scoped_customer_id and _is_scope_error(exc):
+                    retry_step.summary = "Blocked cross-customer lookup outside request identity scope."
+                    run.decision = "denied"
+                    run.assistant_message = "I cannot process that refund because the order does not belong to the verified customer."
+                    db.commit()
+                    return
+                retry_step.status = "error"
+                retry_step.summary = f"Retry with normalized order id failed: {exc}"
+                db.commit()
+    else:
+        lookup_step = _log_step(db, run, "tool", "lookup_order", "ok", "Attempting order lookup from customer message.")
+        try:
+            if not order_id:
+                raise ValueError("No order number found in the customer message")
+            order = log_tool_call(
+                db,
+                lookup_step,
+                "lookup_order",
+                {"order_id": order_id},
+                lambda: _lookup_order_scoped(db, order_id, scoped_customer_id),
+            )
+        except Exception as exc:
+            lookup_step.status = "error"
+            lookup_step.retry_count = 1
+            if scoped_customer_id and _is_scope_error(exc):
+                lookup_step.summary = "Blocked cross-customer lookup outside request identity scope."
+                run.decision = "denied"
+                run.assistant_message = "I cannot process that refund because the order does not belong to the verified customer."
+                db.commit()
+                return
+            else:
+                lookup_step.summary = f"Initial order lookup failed: {exc}. Retrying with customer identity and order history."
+            db.commit()
 
     if email:
         if not customer:
@@ -300,6 +353,16 @@ def _lookup_order_scoped(db: Session, order_id: str, scoped_customer_id: str | N
         if db.get(models.Order, order_id.strip().upper()):
             raise PermissionError("Order does not belong to the verified customer.")
         raise
+
+
+def _lookup_order_raw(db: Session, order_id: str, scoped_customer_id: str | None = None) -> dict:
+    query = db.query(models.Order).filter(models.Order.id == order_id.strip())
+    if scoped_customer_id:
+        query = query.filter(models.Order.customer_id == scoped_customer_id)
+    order = query.first()
+    if not order:
+        raise ValueError("Order not found")
+    return lookup_order(db, order.id, scoped_customer_id)
 
 
 def _evaluate_refund_rules_scoped(
@@ -441,6 +504,21 @@ def _log_step(
 def _extract_order_id(message: str) -> str | None:
     match = re.search(r"\b(ORD-[0-9]{4})\b", message.upper())
     return match.group(1) if match else None
+
+
+def _extract_malformed_order_id(message: str) -> str | None:
+    match = re.search(r"\b(ord|order)[ -]+([0-9]{4})\b", message, re.IGNORECASE)
+    if not match:
+        return None
+    raw = match.group(0).rstrip(".,;:!?")
+    return None if re.fullmatch(r"ORD-[0-9]{4}", raw) else raw
+
+
+def _normalize_malformed_order_id(order_id: str) -> str:
+    digits = re.search(r"([0-9]{4})", order_id)
+    if not digits:
+        raise ValueError("Malformed order id does not contain a 4-digit order number")
+    return f"ORD-{digits.group(1)}"
 
 
 def _extract_email(message: str) -> str | None:
