@@ -1,5 +1,7 @@
 import os
+from types import SimpleNamespace
 
+import pytest
 from fastapi.testclient import TestClient
 
 from app import agent, models, tools
@@ -235,6 +237,40 @@ def test_model_cannot_call_record_refund_decision_directly():
             raise AssertionError("record_refund_decision should not be model-callable")
     finally:
         db.close()
+
+
+def test_token_cost_is_estimated_from_openai_usage(monkeypatch):
+    monkeypatch.delenv("OPENAI_INPUT_COST_PER_1M_TOKENS", raising=False)
+    monkeypatch.delenv("OPENAI_OUTPUT_COST_PER_1M_TOKENS", raising=False)
+    monkeypatch.delenv("OPENAI_CACHED_INPUT_COST_PER_1M_TOKENS", raising=False)
+    run = models.AgentRun(session_id="usage-test", customer_message="hello", model="gpt-5.4-mini")
+    response = SimpleNamespace(usage=SimpleNamespace(input_tokens=1000, output_tokens=2000))
+
+    agent._record_response_usage(run, response)
+
+    assert run.token_input == 1000
+    assert run.token_output == 2000
+    assert run.estimated_cost == 0.00975
+
+
+def test_token_cost_uses_cached_input_rate_when_present(monkeypatch):
+    monkeypatch.delenv("OPENAI_INPUT_COST_PER_1M_TOKENS", raising=False)
+    monkeypatch.delenv("OPENAI_OUTPUT_COST_PER_1M_TOKENS", raising=False)
+    monkeypatch.delenv("OPENAI_CACHED_INPUT_COST_PER_1M_TOKENS", raising=False)
+    run = models.AgentRun(session_id="usage-test", customer_message="hello", model="gpt-5.4-mini")
+    response = SimpleNamespace(
+        usage={
+            "input_tokens": 1000,
+            "output_tokens": 2000,
+            "input_tokens_details": {"cached_tokens": 400},
+        }
+    )
+
+    agent._record_response_usage(run, response)
+
+    assert run.token_input == 1000
+    assert run.token_output == 2000
+    assert run.estimated_cost == pytest.approx(0.00948)
 
 
 def test_final_response_is_not_approved_when_persistence_fails(monkeypatch):

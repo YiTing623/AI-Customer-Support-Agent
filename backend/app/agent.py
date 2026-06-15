@@ -13,6 +13,12 @@ from .tools import call_tool, get_refund_policy, log_tool_call, lookup_customer,
 
 DEFAULT_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.4-mini")
 
+MODEL_PRICING_PER_1M_TOKENS = {
+    "gpt-5.4": {"input": 2.50, "cached_input": 0.25, "output": 15.00},
+    "gpt-5.4-mini": {"input": 0.75, "cached_input": 0.075, "output": 4.50},
+    "gpt-5.5": {"input": 5.00, "cached_input": 0.50, "output": 30.00},
+}
+
 
 TOOL_DEFINITIONS: list[dict[str, Any]] = [
     {
@@ -130,10 +136,7 @@ def _run_openai_loop(
     loops = 0
     while loops < 6:
         loops += 1
-        usage = getattr(response, "usage", None)
-        if usage:
-            run.token_input += getattr(usage, "input_tokens", 0) or 0
-            run.token_output += getattr(usage, "output_tokens", 0) or 0
+        _record_response_usage(run, response)
         function_calls = [item for item in getattr(response, "output", []) if getattr(item, "type", "") == "function_call"]
         if not function_calls:
             break
@@ -484,6 +487,67 @@ def _set_final_response(run: models.AgentRun, result: dict, order_id: str, llm_t
         run.assistant_message = f"I cannot approve this automatically. Order {order_id} requires human escalation. {result['reason']}"
     else:
         run.assistant_message = f"I cannot approve a refund for order {order_id}. {result['reason']}"
+
+
+def _record_response_usage(run: models.AgentRun, response: Any) -> None:
+    usage = getattr(response, "usage", None)
+    if not usage:
+        return
+    input_tokens = _get_usage_value(usage, "input_tokens")
+    output_tokens = _get_usage_value(usage, "output_tokens")
+    cached_input_tokens = _get_cached_input_tokens(usage)
+    run.token_input = (run.token_input or 0) + input_tokens
+    run.token_output = (run.token_output or 0) + output_tokens
+    run.estimated_cost = (run.estimated_cost or 0) + _estimate_token_cost(
+        run.model or DEFAULT_MODEL,
+        input_tokens,
+        output_tokens,
+        cached_input_tokens,
+    )
+
+
+def _estimate_token_cost(model: str, input_tokens: int, output_tokens: int, cached_input_tokens: int = 0) -> float:
+    pricing = _pricing_for_model(model)
+    if not pricing:
+        return 0
+    cached_input_tokens = max(0, min(cached_input_tokens, input_tokens))
+    uncached_input_tokens = input_tokens - cached_input_tokens
+    input_cost = uncached_input_tokens * pricing["input"] / 1_000_000
+    cached_input_cost = cached_input_tokens * pricing.get("cached_input", pricing["input"]) / 1_000_000
+    output_cost = output_tokens * pricing["output"] / 1_000_000
+    return input_cost + cached_input_cost + output_cost
+
+
+def _pricing_for_model(model: str) -> dict[str, float] | None:
+    env_input = os.getenv("OPENAI_INPUT_COST_PER_1M_TOKENS")
+    env_output = os.getenv("OPENAI_OUTPUT_COST_PER_1M_TOKENS")
+    if env_input and env_output:
+        pricing = {"input": float(env_input), "output": float(env_output)}
+        env_cached = os.getenv("OPENAI_CACHED_INPUT_COST_PER_1M_TOKENS")
+        if env_cached:
+            pricing["cached_input"] = float(env_cached)
+        return pricing
+
+    normalized = model.strip().lower()
+    if normalized in MODEL_PRICING_PER_1M_TOKENS:
+        return MODEL_PRICING_PER_1M_TOKENS[normalized]
+    for model_prefix, pricing in MODEL_PRICING_PER_1M_TOKENS.items():
+        if normalized.startswith(f"{model_prefix}-"):
+            return pricing
+    return None
+
+
+def _get_cached_input_tokens(usage: Any) -> int:
+    details = _get_usage_value(usage, "input_tokens_details", default=None)
+    if details is None:
+        details = _get_usage_value(usage, "prompt_tokens_details", default=None)
+    return _get_usage_value(details, "cached_tokens") if details is not None else 0
+
+
+def _get_usage_value(source: Any, key: str, default: Any = 0) -> Any:
+    if isinstance(source, dict):
+        return source.get(key, default) or default
+    return getattr(source, key, default) or default
 
 
 def _log_step(

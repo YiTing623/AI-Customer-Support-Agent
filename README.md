@@ -44,6 +44,8 @@ The backend requires `openai>=1.88.0,<2` for the Responses API client. Re-run `p
 
 The same `/api/chat` and trace APIs are used in both OpenAI mode and deterministic demo mode, so reviewers can inspect the full product flow without an API key.
 
+OpenAI-mode traces estimate cost from reported input/output token usage. The built-in defaults cover `gpt-5.4-mini`, `gpt-5.4`, and `gpt-5.5`; override them with `OPENAI_INPUT_COST_PER_1M_TOKENS`, `OPENAI_OUTPUT_COST_PER_1M_TOKENS`, and optionally `OPENAI_CACHED_INPUT_COST_PER_1M_TOKENS` if you use a different model or pricing tier. Deterministic demo mode has no LLM usage, so its cost remains `$0.0000`.
+
 Reset seed data:
 
 ```bash
