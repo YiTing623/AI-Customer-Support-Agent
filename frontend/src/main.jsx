@@ -72,7 +72,7 @@ function App() {
   const [selectedRunId, setSelectedRunId] = useState(null);
   const [trace, setTrace] = useState(emptyTrace);
   const [loading, setLoading] = useState(false);
-  const [health, setHealth] = useState('checking');
+  const [health, setHealth] = useState('');
   const [healthNotice, setHealthNotice] = useState('');
 
   useEffect(() => {
@@ -83,7 +83,7 @@ function App() {
         setHealth(`${data.status} · ${data.customers} customers · ${formatMode(data.agent_mode)}`);
         setHealthNotice(data.mode_notice || '');
       })
-      .catch(() => setHealth('backend offline'));
+      .catch(() => setHealth(''));
   }, []);
 
   useEffect(() => {
@@ -144,7 +144,7 @@ function App() {
           <ShieldCheck size={24} />
           <div>
             <h1>Refund Agent Console</h1>
-            <span>{health}</span>
+            {health && <span>{health}</span>}
           </div>
         </div>
         <div className="top-actions">
