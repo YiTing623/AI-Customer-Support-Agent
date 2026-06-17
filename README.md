@@ -2,6 +2,8 @@
 
 A local full-stack demo of an AI-assisted refund support workflow for e-commerce. Customers can chat about refund requests, while an admin trace panel shows the agent's tool calls, retries, policy reasoning, token usage, latency, and final decision.
 
+live: https://ai-customer-support-agent-ten.vercel.app/
+
 The app runs in two modes:
 
 - **OpenAI mode** when `OPENAI_API_KEY` is configured. The backend uses the OpenAI Responses API with function calling.
