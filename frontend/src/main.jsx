@@ -16,6 +16,9 @@ import {
 } from 'lucide-react';
 import './styles.css';
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
+
 const presets = [
   {
     label: 'Approve',
@@ -85,14 +88,14 @@ function App() {
 
   useEffect(() => {
     if (!selectedRunId) return;
-    fetch(`/api/runs/${selectedRunId}`)
+    fetch(`${API_BASE_URL}/api/runs/${selectedRunId}`)
       .then((res) => res.json())
       .then(setTrace)
       .catch(() => setTrace(emptyTrace));
   }, [selectedRunId]);
 
   async function refreshRuns() {
-    const res = await fetch('/api/runs');
+    const res = await fetch(`${API_BASE_URL}/api/runs`);
     const data = await res.json();
     setRuns(data);
     if (!selectedRunId && data.length) setSelectedRunId(data[0].id);
@@ -105,7 +108,7 @@ function App() {
     setLoading(true);
     setMessages((items) => [...items, { role: 'user', content: text }]);
     try {
-      const res = await fetch('/api/chat', {
+      const res = await fetch(`${API_BASE_URL}/api/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ session_id: sessionId, customer_email: customerEmail, customer_message: text })
@@ -125,7 +128,7 @@ function App() {
   }
 
   async function resetSeed() {
-    await fetch('/api/seed/reset', { method: 'POST' });
+    await fetch(`${API_BASE_URL}/api/seed/reset`, { method: 'POST' });
     setMessages([{ role: 'assistant', content: 'Demo data reset. Pick a scenario and run the agent.' }]);
     setTrace(emptyTrace);
     setSelectedRunId(null);
